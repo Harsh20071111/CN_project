@@ -188,5 +188,17 @@ def logout():
     session.pop('admin', None)
     return redirect('/admin_login')
 
+@app.route('/clear_local')
+def clear_local():
+    if not session.get('admin'):
+        return redirect('/admin_login')
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("DELETE FROM logs WHERE ip LIKE '127.%' OR ip LIKE '10.%' OR ip LIKE '::1' OR ip = 'localhost'")
+    deleted = c.rowcount
+    conn.commit()
+    conn.close()
+    return f"Cleared {deleted} localhost/internal entries. <a href='/dashboard'>Go back to Dashboard</a>"
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
