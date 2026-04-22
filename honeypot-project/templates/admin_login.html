@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Authentication</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="login-page">
+  <div class="login-container" style="border-color: var(--danger); box-shadow: var(--shadow-glow-red);">
+    <div class="login-header">
+      <div class="logo-icon shield">🛡️</div>
+      <h2>System Administration</h2>
+      <p>Authorized personnel only. Intruders will be logged.</p>
+    </div>
+    
+    <form action="/admin_login" method="POST" class="login-form">
+      <div class="form-group">
+        <label for="password">Admin Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter admin password (admin123)" required>
+      </div>
+      <button type="submit" class="btn-primary" style="background-color: var(--danger);">Access Dashboard</button>
+    </form>
+  </div>
+</body>
+</html>

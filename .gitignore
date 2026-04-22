@@ -1,0 +1,18 @@
+# Compiled binaries
+server
+client
+
+# SQLite database (auto-created)
+chat.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

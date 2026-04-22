@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Honeypot System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Chart.js for visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-page">
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon shield">🛡️</div>
+      <h2>HoneyTrap System</h2>
+      <span class="badge red">ACTIVE</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard" class="nav-item active">
+        <span class="icon">📊</span> Overview & Analytics
+      </a>
+        <a href="/logout" class="nav-item">
+          <span class="icon">🚪</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <p>Advanced Honeypot v2.0</p>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="topbar">
+        <h1>Advanced Security Dashboard</h1>
+        <div class="topbar-actions">
+          <a href="/export" class="btn-secondary">
+            <span class="icon">📥</span> Export CSV Logs
+          </a>
+          <button class="btn-secondary" onclick="location.reload()">
+            <span class="icon">🔄</span> Refresh System
+          </button>
+          <div class="user-profile">Admin</div>
+        </div>
+      </header>
+
+      <div class="dashboard-stats">
+        <div class="stat-card">
+          <div class="stat-icon red">🎯</div>
+          <div class="stat-info">
+            <span class="stat-label">Total Attack Captures</span>
+            <span class="stat-value" id="total-captures">{{ logs|length }}</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">🔥</div>
+          <div class="stat-info">
+            <span class="stat-label">Blocked Accounts (Intrusion Prevention)</span>
+            <span class="stat-value" id="blocked-count">0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">⏱️</div>
+          <div class="stat-info">
+            <span class="stat-label">AI Threat Detection</span>
+            <span class="stat-value">Active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-grid mt-4 mb-4">
+        <div class="card p-4">
+          <h3 class="mb-4">Attack Volume (Attempts)</h3>
+          <canvas id="attackChart" style="max-height: 250px;"></canvas>
+        </div>
+        <div class="card p-4">
+          <h3 class="mb-4">Top Targeted Usernames</h3>
+          <div style="display:flex; justify-content:center;">
+             <canvas id="userChart" style="max-height: 250px;"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logs Table -->
+      <div class="content-grid mt-4">
+        <div class="logs-section card p-4">
+          <div class="card-header">
+            <h3>Captured Credentials & Analytics</h3>
+            <span class="subtitle">Real-time attack analysis</span>
+          </div>
+          
+          <div class="table-container">
+            <table class="logs-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Timestamp</th>
+                  <th>Attacker IP</th>
+                  <th>Location 📍</th>
+                  <th>Risk (AI) 🧠</th>
+                  <th>Username</th>
+                  <th>Password Attempt</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if logs %}
+                  {% for row in logs %}
+                  <tr>
+                    <td><span class="id-badge">#{{ row[0] }}</span></td>
+                    <td class="timestamp">{{ row[6][:19] }}</td>
+                    <td><span class="ip-badge">{{ row[3] }}</span></td>
+                    <td class="location-cell">{{ row[4] }}</td>
+                    <td>
+                      {% if row[5] == 'High Risk' %}
+                        <span class="badge red">High Risk</span>
+                      {% else %}
+                        <span class="badge" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc;">Normal</span>
+                      {% endif %}
+                    </td>
+                    <td class="username">{{ row[1] }}</td>
+                    <td class="password-field">
+                      <span class="pwd-mask">••••••••</span>
+                      <span class="pwd-text hidden">{{ row[2] }}</span>
+                      <button class="btn-icon toggle-pwd" title="Reveal Password">👁️</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="7" class="empty-state">
+                      <div class="empty-icon">🎣</div>
+                      <p>No captures yet. The intelligent honeypot is waiting...</p>
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Password toggle functionality
+    document.querySelectorAll('.toggle-pwd').forEach(button => {
+      button.addEventListener('click', function() {
+        const td = this.closest('.password-field');
+        const mask = td.querySelector('.pwd-mask');
+        const text = td.querySelector('.pwd-text');
+        
+        if (mask.classList.contains('hidden')) {
+          mask.classList.remove('hidden');
+          text.classList.add('hidden');
+          this.textContent = '👁️';
+        } else {
+          mask.classList.add('hidden');
+          text.classList.remove('hidden');
+          this.textContent = '🙈';
+        }
+      });
+    });
+
+    // Extract Data for Charts from Table
+    const logs = [];
+    document.querySelectorAll('.logs-table tbody tr').forEach(tr => {
+      if(tr.querySelector('.ip-badge')) {
+        logs.push({
+          ip: tr.querySelector('.ip-badge').textContent,
+          username: tr.querySelector('.username').textContent,
+          time: tr.querySelector('.timestamp').textContent
+        });
+      }
+    });
+
+    // Blocked Accounts Stats logic
+    const accountCounts = {};
+    let blockedCount = 0;
+    logs.forEach(log => {
+      const key = log.ip + '|' + log.username;
+      accountCounts[key] = (accountCounts[key] || 0) + 1;
+    });
+    for (const [key, count] of Object.entries(accountCounts)) {
+      if (count >= 10) blockedCount++;
+    }
+    document.getElementById('blocked-count').textContent = blockedCount;
+
+    // Charts Logic
+    if(logs.length > 0) {
+      // 1. Top Usernames Chart
+      const userCounts = {};
+      logs.forEach(log => {
+        userCounts[log.username] = (userCounts[log.username] || 0) + 1;
+      });
+      const topUsers = Object.entries(userCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+      
+      new Chart(document.getElementById("userChart"), {
+        type: "doughnut",
+        data: {
+          labels: topUsers.map(u => u[0]),
+          datasets: [{
+            data: topUsers.map(u => u[1]),
+            backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { color: '#f8fafc' } } }
+        }
+      });
+
+      // 2. Attack Volumes Chart (Grouping by IP attempts for mock visualization)
+      const attemptVolumes = [
+        logs.filter(l => ipCounts[l.ip] < 5).length, 
+        logs.filter(l => ipCounts[l.ip] >= 5 && ipCounts[l.ip] < 10).length, 
+        logs.filter(l => ipCounts[l.ip] >= 10).length
+      ];
+
+      new Chart(document.getElementById("attackChart"), {
+        type: "bar",
+        data: {
+          labels: ["Low Threat (1-4 attempts)", "Medium Threat (5-9 attempts)", "Blocked (>=10 attempts)"],
+          datasets: [{
+            label: "Login Attempts",
+            data: attemptVolumes,
+            backgroundColor: ["#10b981", "#f59e0b", "#ef4444"],
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
