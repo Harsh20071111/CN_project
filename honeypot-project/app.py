@@ -95,7 +95,13 @@ def home():
 def login():
     username = request.form.get('username', '')
     password = request.form.get('password', '')
-    ip = request.remote_addr
+    
+    # Get Real IP behind Render's reverse proxy
+    if request.headers.get('X-Forwarded-For'):
+        ip = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    else:
+        ip = request.remote_addr
+        
     time_str = str(datetime.datetime.now())
 
     conn = sqlite3.connect(DB_NAME)
