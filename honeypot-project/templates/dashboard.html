@@ -73,11 +73,23 @@
       <!-- Charts Section -->
       <div class="charts-grid mt-4 mb-4">
         <div class="card p-4">
-          <h3 class="mb-4">Attack Volume (Attempts)</h3>
-          <canvas id="attackChart" style="max-height: 250px;"></canvas>
+          <h3 class="mb-4">📈 Attacks Per Hour (Timeline)</h3>
+          <canvas id="timelineChart" style="max-height: 250px;"></canvas>
         </div>
         <div class="card p-4">
-          <h3 class="mb-4">Top Targeted Usernames</h3>
+          <h3 class="mb-4">🧠 Risk Level Distribution (AI)</h3>
+          <div style="display:flex; justify-content:center;">
+            <canvas id="riskChart" style="max-height: 250px;"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="charts-grid mb-4">
+        <div class="card p-4">
+          <h3 class="mb-4">🌐 Top Attacker IPs</h3>
+          <canvas id="ipChart" style="max-height: 250px;"></canvas>
+        </div>
+        <div class="card p-4">
+          <h3 class="mb-4">🎯 Top Targeted Usernames</h3>
           <div style="display:flex; justify-content:center;">
              <canvas id="userChart" style="max-height: 250px;"></canvas>
           </div>
@@ -115,9 +127,11 @@
                     <td class="location-cell">{{ row[4] }}</td>
                     <td>
                       {% if row[5] == 'High Risk' %}
-                        <span class="badge red">High Risk</span>
+                        <span class="badge red">🔴 High Risk</span>
+                      {% elif row[5] == 'Medium Risk' %}
+                        <span class="badge" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #f59e0b;">🟡 Medium Risk</span>
                       {% else %}
-                        <span class="badge" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc;">Normal</span>
+                        <span class="badge" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #10b981;">🟢 Low Risk</span>
                       {% endif %}
                     </td>
                     <td class="username">{{ row[1] }}</td>
@@ -181,10 +195,12 @@
     const logs = [];
     document.querySelectorAll('.logs-table tbody tr').forEach(tr => {
       if(tr.querySelector('.ip-badge')) {
+        const riskEl = tr.querySelector('.badge');
         logs.push({
           ip: tr.querySelector('.ip-badge').textContent,
           username: tr.querySelector('.username').textContent,
-          time: tr.querySelector('.timestamp').textContent
+          time: tr.querySelector('.timestamp').textContent,
+          risk: riskEl ? riskEl.textContent.trim() : 'Low Risk'
         });
       }
     });
@@ -241,20 +257,58 @@
 
     // Charts Logic
     if(logs.length > 0) {
-      // 1. Top Usernames Chart
-      const userCounts = {};
+      // Chart colors
+      const chartColors = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+
+      // 1. Attacks Per Hour (Line Chart)
+      const hourCounts = {};
       logs.forEach(log => {
-        userCounts[log.username] = (userCounts[log.username] || 0) + 1;
+        const hour = log.time.substring(11, 13) + ':00';
+        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
       });
-      const topUsers = Object.entries(userCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+      const sortedHours = Object.keys(hourCounts).sort();
       
-      new Chart(document.getElementById("userChart"), {
-        type: "doughnut",
+      new Chart(document.getElementById('timelineChart'), {
+        type: 'line',
         data: {
-          labels: topUsers.map(u => u[0]),
+          labels: sortedHours,
           datasets: [{
-            data: topUsers.map(u => u[1]),
-            backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'],
+            label: 'Attempts',
+            data: sortedHours.map(h => hourCounts[h]),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#3b82f6',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+          },
+          plugins: { legend: { labels: { color: '#f8fafc' } } }
+        }
+      });
+
+      // 2. Risk Level Distribution (Doughnut Chart)
+      const riskCounts = { 'High': 0, 'Medium': 0, 'Low': 0 };
+      logs.forEach(log => {
+        if (log.risk.includes('High')) riskCounts['High']++;
+        else if (log.risk.includes('Medium')) riskCounts['Medium']++;
+        else riskCounts['Low']++;
+      });
+      
+      new Chart(document.getElementById('riskChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['🔴 High Risk', '🟡 Medium Risk', '🟢 Low Risk'],
+          datasets: [{
+            data: [riskCounts['High'], riskCounts['Medium'], riskCounts['Low']],
+            backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
             borderWidth: 0
           }]
         },
@@ -265,32 +319,53 @@
         }
       });
 
-      // 2. Attack Volumes Chart (Grouping by IP attempts for mock visualization)
-      const attemptVolumes = [
-        logs.filter(l => ipCounts[l.ip] < 3).length, 
-        logs.filter(l => ipCounts[l.ip] >= 3 && ipCounts[l.ip] < 5).length, 
-        logs.filter(l => ipCounts[l.ip] >= 5).length
-      ];
-
-      new Chart(document.getElementById("attackChart"), {
-        type: "bar",
+      // 3. Top Attacker IPs (Horizontal Bar Chart)
+      const topIPs = Object.entries(ipCounts).sort((a,b) => b[1] - a[1]).slice(0, 6);
+      
+      new Chart(document.getElementById('ipChart'), {
+        type: 'bar',
         data: {
-          labels: ["Low Threat (1-2 attempts)", "Medium Threat (3-4 attempts)", "Blocked (>=5 attempts)"],
+          labels: topIPs.map(i => i[0]),
           datasets: [{
-            label: "Login Attempts",
-            data: attemptVolumes,
-            backgroundColor: ["#10b981", "#f59e0b", "#ef4444"],
+            label: 'Attempts',
+            data: topIPs.map(i => i[1]),
+            backgroundColor: chartColors.slice(0, topIPs.length),
             borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { beginAtZero: true, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // 4. Top Targeted Usernames (Doughnut Chart)
+      const userCounts = {};
+      logs.forEach(log => {
+        userCounts[log.username] = (userCounts[log.username] || 0) + 1;
+      });
+      const topUsers = Object.entries(userCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
+      
+      new Chart(document.getElementById('userChart'), {
+        type: 'doughnut',
+        data: {
+          labels: topUsers.map(u => u[0]),
+          datasets: [{
+            data: topUsers.map(u => u[1]),
+            backgroundColor: chartColors.slice(0, topUsers.length),
+            borderWidth: 0
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          scales: {
-            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
-          },
-          plugins: { legend: { display: false } }
+          plugins: { legend: { position: 'right', labels: { color: '#f8fafc' } } }
         }
       });
     }

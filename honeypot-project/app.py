@@ -6,6 +6,7 @@ import csv
 import smtplib
 from email.mime.text import MIMEText
 import os
+import hashlib
 
 app = Flask(__name__)
 app.secret_key = "super_secure_admin_key"
@@ -51,11 +52,34 @@ def get_location(ip):
     return "Unknown", "N/A"
 
 def detect_attack(username, password):
-    # Rule-based Basic AI / Heuristics for detection
-    username = username.lower()
-    if username == "admin" or password == "123456" or "root" in username or password.lower() == "password":
-        return "High Risk"
-    return "Normal"
+    # Heuristic-based Anomaly Detection (Scoring System)
+    score = 0
+    u = username.lower()
+    p = password.lower()
+    
+    # Check for common attack usernames
+    if u in ['admin', 'root', 'administrator', 'test', 'user']:
+        score += 2
+    if 'admin' in u or 'root' in u:
+        score += 1
+    
+    # Check for common weak/attack passwords
+    if password in ['123456', '12345678', 'password', 'admin', 'qwerty', 'abc123', 'letmein', '111111']:
+        score += 2
+    if len(password) < 6:
+        score += 1
+    
+    # Check for SQL injection patterns
+    if any(x in u for x in ["'", '"', '--', 'or ', 'drop', 'select']):
+        score += 3
+    if any(x in p for x in ["'", '"', '--', 'or ', 'drop', 'select']):
+        score += 3
+    
+    if score >= 3:
+        return 'High Risk'
+    elif score >= 1:
+        return 'Medium Risk'
+    return 'Low Risk'
 
 def send_email_alert(ip, username, password, location, maps_link, time):
     sender = "kamleshpanchal21121983@gmail.com"
@@ -117,10 +141,13 @@ def login():
         maps_link = f"https://www.google.com/maps?q={exact_lat},{exact_lon}"
         location_text += " (EXACT GPS MATCH)"
     risk_level = detect_attack(username, password)
+    
+    # Hash the password before storing (Security Best Practice)
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
     # Save to Database (we log every attempt to keep history, even if blocked)
     c.execute("INSERT INTO logs (username, password, ip, location, risk_level, time) VALUES (?, ?, ?, ?, ?, ?)",
-              (username, password, ip, location_text, risk_level, time_str))
+              (username, hashed_password, ip, location_text, risk_level, time_str))
     conn.commit()
 
     # Check Username Blocking System
