@@ -115,12 +115,12 @@ def login():
     attempts = c.fetchone()[0]
     conn.close()
 
-    # Alert System: ONLY send an email when the attacker gets blocked (on the 11th attempt)
+    # Alert System: ONLY send an email when the attacker gets blocked (on the 6th attempt)
     # This prevents email spam for just 1 or 2 mistakes.
-    if attempts == 11:
+    if attempts == 6:
         send_email_alert(ip, username, password, location_text, maps_link, time_str)
 
-    if attempts > 10:
+    if attempts > 5:
         return f"Access Denied. The username '{username}' has been temporarily blocked due to excessive login attempts.", 403
 
     return "Login Failed. Invalid credentials."

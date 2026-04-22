@@ -54,7 +54,7 @@
             <span class="stat-value" id="total-captures">{{ logs|length }}</span>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" id="blocked-card" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" title="Click to view blocked accounts">
           <div class="stat-icon orange">🔥</div>
           <div class="stat-info">
             <span class="stat-label">Blocked Accounts (Intrusion Prevention)</span>
@@ -144,6 +144,19 @@
     </main>
   </div>
 
+  <!-- Blocked Accounts Modal -->
+  <div class="modal-overlay" id="blocked-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🔥 Blocked Intruders</h3>
+        <button class="close-modal" id="close-modal">&times;</button>
+      </div>
+      <ul class="blocked-list" id="blocked-list-container">
+        <!-- JS populates this -->
+      </ul>
+    </div>
+  </div>
+
   <script>
     // Password toggle functionality
     document.querySelectorAll('.toggle-pwd').forEach(button => {
@@ -179,14 +192,52 @@
     // Blocked Accounts Stats logic
     const accountCounts = {};
     let blockedCount = 0;
+    const blockedUsernames = [];
+    
     logs.forEach(log => {
       const key = log.ip + '|' + log.username;
       accountCounts[key] = (accountCounts[key] || 0) + 1;
     });
+    
     for (const [key, count] of Object.entries(accountCounts)) {
-      if (count >= 10) blockedCount++;
+      if (count >= 5) {
+        blockedCount++;
+        blockedUsernames.push(key.split('|')[1]); // get just the username
+      }
     }
     document.getElementById('blocked-count').textContent = blockedCount;
+
+    // Show blocked accounts on click (Modal)
+    const modal = document.getElementById('blocked-modal');
+    const closeBtn = document.getElementById('close-modal');
+    const listContainer = document.getElementById('blocked-list-container');
+
+    document.getElementById('blocked-card').addEventListener('click', function() {
+      if (blockedUsernames.length === 0) {
+        listContainer.innerHTML = "<li style='color: var(--text-muted); justify-content:center; background:none; border:none;'><span style='display:none;'></span>No accounts blocked yet.</li>";
+      } else {
+        const uniqueBlocked = [...new Set(blockedUsernames)];
+        listContainer.innerHTML = uniqueBlocked.map(user => `<li>${user}</li>`).join("");
+      }
+      modal.classList.add('active');
+      // small delay to trigger CSS transition
+      setTimeout(() => modal.querySelector('.modal-content').style.opacity = '1', 10);
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if(e.target === modal) modal.classList.remove('active');
+    });
+
+    // Extract IP Counts for the bar chart
+    const ipCounts = {};
+    logs.forEach(log => {
+      ipCounts[log.ip] = (ipCounts[log.ip] || 0) + 1;
+    });
 
     // Charts Logic
     if(logs.length > 0) {
@@ -216,15 +267,15 @@
 
       // 2. Attack Volumes Chart (Grouping by IP attempts for mock visualization)
       const attemptVolumes = [
-        logs.filter(l => ipCounts[l.ip] < 5).length, 
-        logs.filter(l => ipCounts[l.ip] >= 5 && ipCounts[l.ip] < 10).length, 
-        logs.filter(l => ipCounts[l.ip] >= 10).length
+        logs.filter(l => ipCounts[l.ip] < 3).length, 
+        logs.filter(l => ipCounts[l.ip] >= 3 && ipCounts[l.ip] < 5).length, 
+        logs.filter(l => ipCounts[l.ip] >= 5).length
       ];
 
       new Chart(document.getElementById("attackChart"), {
         type: "bar",
         data: {
-          labels: ["Low Threat (1-4 attempts)", "Medium Threat (5-9 attempts)", "Blocked (>=10 attempts)"],
+          labels: ["Low Threat (1-2 attempts)", "Medium Threat (3-4 attempts)", "Blocked (>=5 attempts)"],
           datasets: [{
             label: "Login Attempts",
             data: attemptVolumes,
