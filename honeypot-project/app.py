@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, send_file
+from werkzeug.middleware.proxy_fix import ProxyFix
 import sqlite3
 import datetime
 import requests
@@ -9,6 +10,9 @@ import os
 
 app = Flask(__name__)
 app.secret_key = "super_secure_admin_key"
+
+# Fix for Render's reverse proxy — ensures real client IP is captured
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 DB_NAME = 'logs_advanced.db'
 
@@ -96,11 +100,11 @@ def login():
     username = request.form.get('username', '')
     password = request.form.get('password', '')
     
-    # Get Real IP behind Render's reverse proxy
-    if request.headers.get('X-Forwarded-For'):
-        ip = request.headers.get('X-Forwarded-For').split(',')[0].strip()
-    else:
-        ip = request.remote_addr
+    # Get Real IP — ProxyFix handles X-Forwarded-For automatically,
+    # but we also check X-Real-IP as a fallback for extra safety
+    ip = request.remote_addr
+    if request.headers.get('X-Real-IP'):
+        ip = request.headers.get('X-Real-IP')
         
     time_str = str(datetime.datetime.now())
 
