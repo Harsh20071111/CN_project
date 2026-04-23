@@ -188,6 +188,47 @@ def logout():
     session.pop('admin', None)
     return redirect('/admin_login')
 
+@app.route('/blocked_accounts')
+def blocked_accounts():
+    """Return JSON list of all blocked IP+username combos."""
+    if not session.get('admin'):
+        return {'error': 'Unauthorized'}, 401
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("""
+        SELECT ip, username, COUNT(*) as attempts
+        FROM logs
+        GROUP BY ip, username
+        HAVING COUNT(*) > 5
+        ORDER BY attempts DESC
+    """)
+    rows = c.fetchall()
+    conn.close()
+    blocked = [{'ip': r[0], 'username': r[1], 'attempts': r[2]} for r in rows]
+    return {'blocked': blocked}
+
+@app.route('/unblock', methods=['POST'])
+def unblock():
+    """Unblock an account by deleting its log entries."""
+    if not session.get('admin'):
+        return {'error': 'Unauthorized'}, 401
+    
+    from flask import jsonify
+    ip = request.form.get('ip', '')
+    username = request.form.get('username', '')
+
+    if not ip or not username:
+        return {'error': 'IP and username are required'}, 400
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("DELETE FROM logs WHERE ip = ? AND username = ?", (ip, username))
+    deleted = c.rowcount
+    conn.commit()
+    conn.close()
+
+    return {'success': True, 'deleted': deleted, 'ip': ip, 'username': username}
+
 @app.route('/clear_local')
 def clear_local():
     if not session.get('admin'):

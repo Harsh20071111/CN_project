@@ -151,9 +151,9 @@
         <h3>🔥 Blocked Intruders</h3>
         <button class="close-modal" id="close-modal">&times;</button>
       </div>
-      <ul class="blocked-list" id="blocked-list-container">
+      <div id="blocked-list-container" class="blocked-list">
         <!-- JS populates this -->
-      </ul>
+      </div>
     </div>
   </div>
 
@@ -189,38 +189,86 @@
       }
     });
 
-    // Blocked Accounts Stats logic
-    const accountCounts = {};
-    let blockedCount = 0;
-    const blockedUsernames = [];
-    
-    logs.forEach(log => {
-      const key = log.ip + '|' + log.username;
-      accountCounts[key] = (accountCounts[key] || 0) + 1;
-    });
-    
-    for (const [key, count] of Object.entries(accountCounts)) {
-      if (count >= 5) {
-        blockedCount++;
-        blockedUsernames.push(key.split('|')[1]); // get just the username
-      }
-    }
-    document.getElementById('blocked-count').textContent = blockedCount;
-
-    // Show blocked accounts on click (Modal)
+    // Blocked Accounts — fetch from backend API
     const modal = document.getElementById('blocked-modal');
     const closeBtn = document.getElementById('close-modal');
     const listContainer = document.getElementById('blocked-list-container');
+    let blockedData = [];
 
-    document.getElementById('blocked-card').addEventListener('click', function() {
-      if (blockedUsernames.length === 0) {
-        listContainer.innerHTML = "<li style='color: var(--text-muted); justify-content:center; background:none; border:none;'><span style='display:none;'></span>No accounts blocked yet.</li>";
+    // Fetch blocked count on page load
+    fetch('/blocked_accounts')
+      .then(r => r.json())
+      .then(data => {
+        blockedData = data.blocked || [];
+        document.getElementById('blocked-count').textContent = blockedData.length;
+      })
+      .catch(() => {
+        document.getElementById('blocked-count').textContent = '—';
+      });
+
+    // Render the blocked list inside the modal
+    function renderBlockedList() {
+      if (blockedData.length === 0) {
+        listContainer.innerHTML = `
+          <div class="blocked-empty">
+            <span style="font-size:2rem; opacity:0.4;">✅</span>
+            <p style="color: var(--text-muted); margin-top:0.5rem;">No accounts blocked yet.</p>
+          </div>`;
       } else {
-        const uniqueBlocked = [...new Set(blockedUsernames)];
-        listContainer.innerHTML = uniqueBlocked.map(user => `<li>${user}</li>`).join("");
+        listContainer.innerHTML = blockedData.map((item, idx) => `
+          <div class="blocked-item" id="blocked-item-${idx}">
+            <div class="blocked-info">
+              <span class="blocked-username">🚫 ${item.username}</span>
+              <span class="blocked-ip">${item.ip}</span>
+              <span class="blocked-attempts">${item.attempts} attempts</span>
+            </div>
+            <button class="btn-unblock" onclick="unblockAccount('${item.ip}', '${item.username}', ${idx})" title="Unblock this account">
+              🔓 Unblock
+            </button>
+          </div>
+        `).join('');
       }
+    }
+
+    // Unblock an account via backend
+    function unblockAccount(ip, username, idx) {
+      const btn = document.querySelector(`#blocked-item-${idx} .btn-unblock`);
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Unblocking...';
+
+      const formData = new FormData();
+      formData.append('ip', ip);
+      formData.append('username', username);
+
+      fetch('/unblock', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            // Animate removal
+            const item = document.getElementById(`blocked-item-${idx}`);
+            item.style.transition = 'all 0.3s ease';
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(30px)';
+            setTimeout(() => {
+              blockedData = blockedData.filter((_, i) => i !== idx);
+              document.getElementById('blocked-count').textContent = blockedData.length;
+              renderBlockedList();
+            }, 300);
+          } else {
+            btn.innerHTML = '❌ Failed';
+            setTimeout(() => { btn.innerHTML = '🔓 Unblock'; btn.disabled = false; }, 2000);
+          }
+        })
+        .catch(() => {
+          btn.innerHTML = '❌ Error';
+          setTimeout(() => { btn.innerHTML = '🔓 Unblock'; btn.disabled = false; }, 2000);
+        });
+    }
+
+    // Open modal on blocked card click
+    document.getElementById('blocked-card').addEventListener('click', function() {
+      renderBlockedList();
       modal.classList.add('active');
-      // small delay to trigger CSS transition
       setTimeout(() => modal.querySelector('.modal-content').style.opacity = '1', 10);
     });
 

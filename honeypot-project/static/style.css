@@ -388,3 +388,79 @@ a:hover { color: var(--primary-hover); }
 }
 
 .blocked-list li::before { content: '🚫'; }
+
+/* Blocked Item Cards */
+.blocked-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.blocked-item:hover {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.blocked-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.blocked-username {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--danger);
+  font-size: 0.95rem;
+}
+
+.blocked-ip {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.blocked-attempts {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-unblock {
+  padding: 0.4rem 0.85rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 6px;
+  color: var(--success);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-unblock:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: var(--success);
+  transform: scale(1.05);
+}
+
+.btn-unblock:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.blocked-empty {
+  text-align: center;
+  padding: 2rem;
+}
