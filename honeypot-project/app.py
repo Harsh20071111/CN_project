@@ -118,6 +118,21 @@ def init_db():
             time TEXT
         )
     ''')
+    
+    # Create Real User Table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT
+        )
+    ''')
+    
+    # Add demo user if not exists
+    c.execute("SELECT * FROM users WHERE username='harsh'")
+    if not c.fetchone():
+        c.execute("INSERT INTO users (username, password) VALUES ('harsh', '1234')")
+        
     conn.commit()
     conn.close()
 
@@ -210,52 +225,81 @@ def send_email_alert(ip, username, password, location, maps_link, time):
     except Exception as e:
         print("Email error:", e)
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template('login.html')
+    if request.method == 'POST':
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
 
-@app.route('/login', methods=['POST'])
-def login():
-    username = request.form.get('username', '')
-    password = request.form.get('password', '')
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        
+        # Check if user exists at all
+        c.execute("SELECT * FROM users WHERE username=?", (username,))
+        user_record = c.fetchone()
 
-    # Get best-available client IP behind proxies/load balancers
-    ip = get_client_ip(request)
+        if user_record:
+            # User exists, check password
+            c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+            user_auth = c.fetchone()
+            conn.close()
 
-    time_str = str(datetime.datetime.now())
+            if user_auth:
+                session['user'] = username
+                return redirect('/bank-dashboard')
+            else:
+                return render_template('bank_login.html', error="Login Failed. Incorrect password. Forgot password?")
+        
+        # User DOES NOT exist -> Honeypot Logic
+        ip = get_client_ip(request)
+        time_str = str(datetime.datetime.now())
+        exact_lat = request.form.get('exact_lat')
+        exact_lon = request.form.get('exact_lon')
+        location_text, maps_link = get_location(ip, exact_lat, exact_lon)
+        risk_level = detect_attack(username, password)
 
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    
-    # Enriched Data
-    # Browser exact GPS (if allowed)
-    exact_lat = request.form.get('exact_lat')
-    exact_lon = request.form.get('exact_lon')
+        c.execute("INSERT INTO logs (username, password, ip, location, risk_level, time) VALUES (?, ?, ?, ?, ?, ?)",
+                  (username, password, ip, location_text, risk_level, time_str))
+        conn.commit()
 
-    # Enriched Data (IP-based and/or exact GPS-based)
-    location_text, maps_link = get_location(ip, exact_lat, exact_lon)
+        c.execute("SELECT COUNT(*) FROM logs WHERE ip = ? AND username = ?", (ip, username))
+        attempts = c.fetchone()[0]
+        conn.close()
 
-    risk_level = detect_attack(username, password)
+        if attempts == 5:
+            send_email_alert(ip, username, password, location_text, maps_link, time_str)
 
-    # Save to Database (we log every attempt to keep history, even if blocked)
-    c.execute("INSERT INTO logs (username, password, ip, location, risk_level, time) VALUES (?, ?, ?, ?, ?, ?)",
-              (username, password, ip, location_text, risk_level, time_str))
-    conn.commit()
+        if attempts >= 5:
+            return f"Access Denied. The username '{username}' has been temporarily blocked due to excessive login attempts.", 403
 
-    # Check Username Blocking System
-    c.execute("SELECT COUNT(*) FROM logs WHERE ip = ? AND username = ?", (ip, username))
-    attempts = c.fetchone()[0]
-    conn.close()
+        return render_template('bank_login.html', error="Invalid credentials")
 
-    # Alert System: ONLY send an email when the attacker gets blocked (on the 5th attempt)
-    # This prevents email spam for just 1 or 2 mistakes.
-    if attempts == 5:
-        send_email_alert(ip, username, password, location_text, maps_link, time_str)
+    return render_template('bank_login.html')
 
-    if attempts >= 5:
-        return f"Access Denied. The username '{username}' has been temporarily blocked due to excessive login attempts.", 403
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        username = request.form.get('username', '')
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE username=?", (username,))
+        user_record = c.fetchone()
+        conn.close()
 
-    return "Login Failed. Invalid credentials."
+        if user_record:
+            return render_template('forgot_password.html', success="A password reset link has been sent to your registered email.")
+        else:
+            return render_template('forgot_password.html', error="If this username exists, a reset link was sent.")
+
+    return render_template('forgot_password.html')
+
+@app.route('/bank-dashboard')
+def bank_dashboard():
+    if not session.get('user'):
+        return redirect('/')
+    return render_template('bank_dashboard.html')
+
+
 
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login_page():
@@ -277,10 +321,13 @@ def dashboard():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("SELECT * FROM logs ORDER BY id DESC")
-    data = c.fetchall()
+    logs_data = c.fetchall()
+    
+    c.execute("SELECT * FROM users")
+    users_data = c.fetchall()
     conn.close()
 
-    return render_template('dashboard.html', logs=data)
+    return render_template('dashboard.html', logs=logs_data, users=users_data)
 
 @app.route('/export')
 def export():

@@ -84,6 +84,45 @@
         </div>
       </div>
 
+      <!-- Real Users Table -->
+      <div class="content-grid mt-4">
+        <div class="users-section card p-4 mb-4">
+          <div class="card-header">
+            <h3>Registered Real Users</h3>
+            <span class="subtitle">Valid banking accounts</span>
+          </div>
+          
+          <div class="table-container">
+            <table class="logs-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if users %}
+                  {% for user in users %}
+                  <tr>
+                    <td><span class="id-badge">#{{ user[0] }}</span></td>
+                    <td class="username">{{ user[1] }}</td>
+                    <td><span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">Valid</span></td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="3" class="empty-state">
+                      <p>No real users registered.</p>
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Logs Table -->
       <div class="content-grid mt-4">
         <div class="logs-section card p-4">
