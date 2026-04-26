@@ -48,21 +48,21 @@
 
       <div class="dashboard-stats">
         <div class="stat-card">
-          <div class="stat-icon red">🎯</div>
+          <div class="stat-icon red">!</div>
           <div class="stat-info">
             <span class="stat-label">Total Attack Captures</span>
             <span class="stat-value" id="total-captures">{{ logs|length }}</span>
           </div>
         </div>
-        <div class="stat-card" id="blocked-card" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" title="Click to view blocked accounts">
-          <div class="stat-icon orange">🔥</div>
+        <div class="stat-card interactive-card" id="blocked-card" title="Click to view blocked accounts">
+          <div class="stat-icon orange">#</div>
           <div class="stat-info">
             <span class="stat-label">Blocked Accounts (Intrusion Prevention)</span>
             <span class="stat-value" id="blocked-count">0</span>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon green">⏱️</div>
+          <div class="stat-icon green">AI</div>
           <div class="stat-info">
             <span class="stat-label">AI Threat Detection</span>
             <span class="stat-value">Active</span>
@@ -138,8 +138,8 @@
                   <th>ID</th>
                   <th>Timestamp</th>
                   <th>Attacker IP</th>
-                  <th>Location 📍</th>
-                  <th>Risk (AI) 🧠</th>
+                  <th>Location</th>
+                  <th>Risk (AI)</th>
                   <th>Username</th>
                   <th>Password Attempt</th>
                 </tr>

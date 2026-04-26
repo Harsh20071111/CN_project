@@ -5,31 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Global Trust Bank</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Manrope', sans-serif;
+            background:
+                radial-gradient(circle at 0% 0%, rgba(14, 165, 233, 0.16), transparent 28rem),
+                radial-gradient(circle at 100% 10%, rgba(20, 184, 166, 0.14), transparent 26rem),
+                linear-gradient(180deg, #f8fafc 0%, #eef4f8 100%);
+        }
+        .bank-card {
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+        }
+        .bank-input {
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .bank-input:focus {
+            outline: none;
+            border-color: #0284c7;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16);
+        }
+        .soft-panel {
+            background: linear-gradient(180deg, #ffffff, #f8fbfd);
+        }
+        .action-button {
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+        }
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 font-sans antialiased">
+<body class="text-gray-900 font-sans antialiased">
 
     <!-- Navbar -->
-    <nav class="bg-blue-900 shadow-md">
+    <nav class="bg-slate-950/95 shadow-md backdrop-blur">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex">
-                    <div class="flex-shrink-0 flex items-center text-white font-bold text-xl tracking-tight">
-                        <i class="fa-solid fa-building-columns mr-2"></i> GTBank
+                    <div class="flex-shrink-0 flex items-center text-white font-extrabold text-xl tracking-tight">
+                        <span class="mr-2 inline-flex h-9 w-9 items-center justify-center rounded-md bg-cyan-400 text-slate-950">
+                            <i class="fa-solid fa-building-columns"></i>
+                        </span>
+                        GTBank
                     </div>
                     <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="/bank-dashboard" class="border-b-2 border-white text-white inline-flex items-center px-1 pt-1 text-sm font-medium">
+                        <a href="#accounts" data-view="accounts" class="nav-link border-b-2 border-white text-white inline-flex items-center px-1 pt-1 text-sm font-medium">
                             Accounts
                         </a>
-                        <a href="/bank-dashboard" class="border-transparent text-blue-100 hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="#transfer-section" data-view="transfer-section" class="nav-link border-transparent text-blue-100 hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Transfers
                         </a>
-                        <a href="/bank-dashboard" class="border-transparent text-blue-100 hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                        <a href="#payments-section" data-view="payments-section" class="nav-link border-transparent text-blue-100 hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Payments
                         </a>
                     </div>
@@ -37,7 +72,7 @@
                 <div class="flex items-center">
                     <div class="flex items-center space-x-4">
                         <span class="text-sm font-medium text-white hidden sm:block">Welcome, {{ session['user'] | capitalize }}</span>
-                        <div class="h-8 w-8 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold">
+                        <div class="h-9 w-9 rounded-md bg-cyan-400 flex items-center justify-center text-slate-950 font-extrabold">
                             {{ session['user'][0] | upper }}
                         </div>
                         <a href="/" class="text-sm text-blue-200 hover:text-white">
@@ -50,12 +85,15 @@
     </nav>
 
     <!-- Header -->
-    <header class="bg-white shadow">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-900">
-                Dashboard Overview
-            </h1>
-            <span class="text-sm text-gray-500" id="current-date"></span>
+    <header class="border-b border-slate-200/70 bg-white/72 backdrop-blur">
+        <div class="max-w-7xl mx-auto py-7 px-4 sm:px-6 lg:px-8 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Personal Banking</p>
+                <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-slate-950">
+                    Dashboard Overview
+                </h1>
+            </div>
+            <span class="text-sm font-medium text-slate-500" id="current-date"></span>
         </div>
     </header>
 
@@ -63,14 +101,14 @@
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         
         <!-- Balance Cards -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+        <div id="accounts" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
             
             <!-- Checking Account -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+            <div class="bank-card soft-panel overflow-hidden">
                 <div class="p-5">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                            <i class="fa-solid fa-wallet text-blue-600 text-xl"></i>
+                        <div class="flex-shrink-0 bg-cyan-100 rounded-md p-3">
+                            <i class="fa-solid fa-wallet text-cyan-700 text-xl"></i>
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
@@ -78,7 +116,7 @@
                                     Everyday Checking (...4582)
                                 </dt>
                                 <dd>
-                                    <div class="text-2xl font-bold text-gray-900">
+                                    <div id="checking-balance" class="text-2xl font-extrabold text-slate-950">
                                         ₹50,000.00
                                     </div>
                                 </dd>
@@ -86,9 +124,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-5 py-3">
+                <div class="bg-slate-50 px-5 py-3">
                     <div class="text-sm">
-                        <a href="/bank-dashboard" class="font-medium text-blue-600 hover:text-blue-900">
+                        <a href="#account-details" data-account="checking" class="account-detail-link font-semibold text-cyan-700 hover:text-cyan-900">
                             View details &rarr;
                         </a>
                     </div>
@@ -96,11 +134,11 @@
             </div>
 
             <!-- Savings Account -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+            <div class="bank-card soft-panel overflow-hidden">
                 <div class="p-5">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-                            <i class="fa-solid fa-piggy-bank text-green-600 text-xl"></i>
+                        <div class="flex-shrink-0 bg-emerald-100 rounded-md p-3">
+                            <i class="fa-solid fa-piggy-bank text-emerald-700 text-xl"></i>
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
@@ -108,7 +146,7 @@
                                     High-Yield Savings (...1123)
                                 </dt>
                                 <dd>
-                                    <div class="text-2xl font-bold text-gray-900">
+                                    <div id="savings-balance" class="text-2xl font-extrabold text-slate-950">
                                         ₹1,25,400.00
                                     </div>
                                 </dd>
@@ -116,9 +154,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-5 py-3">
+                <div class="bg-slate-50 px-5 py-3">
                     <div class="text-sm">
-                        <a href="/bank-dashboard" class="font-medium text-blue-600 hover:text-blue-900">
+                        <a href="#account-details" data-account="savings" class="account-detail-link font-semibold text-cyan-700 hover:text-cyan-900">
                             View details &rarr;
                         </a>
                     </div>
@@ -126,11 +164,11 @@
             </div>
 
             <!-- Credit Card -->
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+            <div class="bank-card soft-panel overflow-hidden">
                 <div class="p-5">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
-                            <i class="fa-regular fa-credit-card text-purple-600 text-xl"></i>
+                        <div class="flex-shrink-0 bg-amber-100 rounded-md p-3">
+                            <i class="fa-regular fa-credit-card text-amber-700 text-xl"></i>
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
@@ -138,17 +176,17 @@
                                     Rewards Credit Card (...8890)
                                 </dt>
                                 <dd>
-                                    <div class="text-2xl font-bold text-gray-900">
-                                        ₹12,350.00 <span class="text-sm font-normal text-gray-500">due</span>
+                                    <div class="text-2xl font-extrabold text-slate-950">
+                                        <span id="credit-due">₹12,350.00</span> <span class="text-sm font-normal text-gray-500">due</span>
                                     </div>
                                 </dd>
                             </dl>
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-5 py-3">
+                <div class="bg-slate-50 px-5 py-3">
                     <div class="text-sm">
-                        <a href="#" class="font-medium text-blue-600 hover:text-blue-900">
+                        <a href="#payments-section" data-view="payments-section" class="quick-payment-link font-semibold text-cyan-700 hover:text-cyan-900">
                             Make payment &rarr;
                         </a>
                     </div>
@@ -158,14 +196,120 @@
         </div>
 
         <!-- Recent Transactions -->
-        <div class="bg-white shadow rounded-lg mb-8">
+        <section id="account-details" class="hidden bank-card soft-panel mb-8">
+            <div class="px-4 py-5 border-b border-gray-200 sm:px-6 flex items-center justify-between">
+                <div>
+                    <h3 id="detail-title" class="text-lg leading-6 font-medium text-gray-900">Account Details</h3>
+                    <p id="detail-subtitle" class="text-sm text-gray-500 mt-1">Select an account to view details.</p>
+                </div>
+                <span id="detail-status" class="text-xs font-semibold px-3 py-1 rounded-full bg-green-100 text-green-700">Active</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-5">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase">Available Balance</p>
+                    <p id="detail-balance" class="mt-1 text-xl font-bold text-gray-900">₹0.00</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase">Account Number</p>
+                    <p id="detail-number" class="mt-1 text-sm font-semibold text-gray-900">--</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase">IFSC</p>
+                    <p id="detail-ifsc" class="mt-1 text-sm font-semibold text-gray-900">--</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-500 uppercase">Branch</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-900">Mumbai Main</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="transfer-section" class="bank-card soft-panel mb-8">
+            <div class="px-4 py-5 border-b border-gray-200 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Fund Transfer</h3>
+                <p class="text-sm text-gray-500 mt-1">Send a demo IMPS transfer from your available accounts.</p>
+            </div>
+            <form id="transfer-form" class="grid grid-cols-1 md:grid-cols-2 gap-5 p-5">
+                <label class="block">
+                    <span class="text-sm font-medium text-gray-700">From account</span>
+                    <select id="transfer-from" class="bank-input mt-1 block w-full px-3 py-2 text-sm">
+                        <option value="checking">Everyday Checking (...4582)</option>
+                        <option value="savings">High-Yield Savings (...1123)</option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-medium text-gray-700">Recipient name</span>
+                    <input id="transfer-recipient" type="text" class="bank-input mt-1 block w-full px-3 py-2 text-sm" placeholder="Example: Rahul Sharma">
+                </label>
+                <label class="block">
+                    <span class="text-sm font-medium text-gray-700">Recipient account number</span>
+                    <input id="transfer-account" type="text" inputmode="numeric" class="bank-input mt-1 block w-full px-3 py-2 text-sm" placeholder="12 digit account number">
+                </label>
+                <label class="block">
+                    <span class="text-sm font-medium text-gray-700">Amount</span>
+                    <input id="transfer-amount" type="number" min="1" step="1" class="bank-input mt-1 block w-full px-3 py-2 text-sm" placeholder="5000">
+                </label>
+                <label class="block md:col-span-2">
+                    <span class="text-sm font-medium text-gray-700">Remarks</span>
+                    <input id="transfer-note" type="text" class="bank-input mt-1 block w-full px-3 py-2 text-sm" placeholder="Optional">
+                </label>
+                <div class="md:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p id="transfer-message" class="text-sm text-gray-500">Transfers are reflected instantly in this demo dashboard.</p>
+                    <button type="submit" class="action-button inline-flex items-center justify-center bg-cyan-700 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-800">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Send Transfer
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section id="payments-section" class="bank-card soft-panel mb-8">
+            <div class="px-4 py-5 border-b border-gray-200 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Payments</h3>
+                <p class="text-sm text-gray-500 mt-1">Pay utilities or reduce your card balance from a bank account.</p>
+            </div>
+            <form id="payment-form" class="grid grid-cols-1 md:grid-cols-2 gap-5 p-5">
+                <label class="block">
+                    <span class="text-sm font-medium text-gray-700">Pay from</span>
+                    <select id="payment-from" class="bank-input mt-1 block w-full px-3 py-2 text-sm">
+                        <option value="checking">Everyday Checking (...4582)</option>
+                        <option value="savings">High-Yield Savings (...1123)</option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-medium text-gray-700">Payment type</span>
+                    <select id="payment-type" class="bank-input mt-1 block w-full px-3 py-2 text-sm">
+                        <option value="Credit Card Payment">Credit Card Payment</option>
+                        <option value="Electricity Bill">Electricity Bill</option>
+                        <option value="Mobile Recharge">Mobile Recharge</option>
+                        <option value="DTH Recharge">DTH Recharge</option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-medium text-gray-700">Biller / card name</span>
+                    <input id="payment-biller" type="text" class="bank-input mt-1 block w-full px-3 py-2 text-sm" value="Rewards Credit Card">
+                </label>
+                <label class="block">
+                    <span class="text-sm font-medium text-gray-700">Amount</span>
+                    <input id="payment-amount" type="number" min="1" step="1" class="bank-input mt-1 block w-full px-3 py-2 text-sm" value="12350">
+                </label>
+                <div class="md:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <p id="payment-message" class="text-sm text-gray-500">Credit card due updates when you make a card payment.</p>
+                    <button type="submit" class="action-button inline-flex items-center justify-center bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800">
+                        <i class="fa-solid fa-receipt mr-2"></i> Pay Now
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Recent Transactions -->
+        <div id="transactions-section" class="bank-card soft-panel mb-8">
             <div class="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">
                     Recent Transactions
                 </h3>
-                <button class="text-sm text-blue-600 font-medium hover:text-blue-800">View All</button>
+                <button id="toggle-history" class="text-sm text-blue-600 font-medium hover:text-blue-800">View All</button>
             </div>
-            <ul class="divide-y divide-gray-200">
+            <ul id="transaction-list" class="divide-y divide-gray-200">
                 <li class="px-4 py-4 sm:px-6 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
@@ -239,9 +383,255 @@
     </main>
 
     <script>
-        // Set current date in header
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', dateOptions);
+
+        const accounts = {
+            checking: {
+                name: 'Everyday Checking',
+                suffix: '4582',
+                number: 'XXXX XXXX 4582',
+                ifsc: 'GTBK0004582',
+                balance: 50000,
+                balanceEl: document.getElementById('checking-balance')
+            },
+            savings: {
+                name: 'High-Yield Savings',
+                suffix: '1123',
+                number: 'XXXX XXXX 1123',
+                ifsc: 'GTBK0001123',
+                balance: 125400,
+                balanceEl: document.getElementById('savings-balance')
+            }
+        };
+        let creditDue = 12350;
+        let historyExpanded = false;
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const styles = {
+                info: {
+                    border: 'border-blue-500',
+                    iconBg: 'bg-blue-100',
+                    iconText: 'text-blue-500',
+                    icon: 'fa-circle-info'
+                },
+                success: {
+                    border: 'border-green-500',
+                    iconBg: 'bg-green-100',
+                    iconText: 'text-green-500',
+                    icon: 'fa-circle-check'
+                },
+                error: {
+                    border: 'border-red-500',
+                    iconBg: 'bg-red-100',
+                    iconText: 'text-red-500',
+                    icon: 'fa-circle-exclamation'
+                }
+            };
+            const style = styles[type] || styles.info;
+
+            toast.className = `transform transition-all duration-300 translate-y-10 opacity-0 flex items-center p-4 w-full max-w-sm text-gray-800 bg-white rounded-lg shadow-xl border-l-4 ${style.border}`;
+            toast.innerHTML = `
+                <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-full ${style.iconBg} ${style.iconText}">
+                    <i class="fa-solid ${style.icon}"></i>
+                </div>
+                <div class="ml-3 text-sm font-medium">${message}</div>
+            `;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-10');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function updateBalances() {
+            accounts.checking.balanceEl.textContent = formatCurrency(accounts.checking.balance);
+            accounts.savings.balanceEl.textContent = formatCurrency(accounts.savings.balance);
+            document.getElementById('credit-due').textContent = formatCurrency(creditDue);
+            document.querySelectorAll('#transfer-from option, #payment-from option').forEach(option => {
+                const account = accounts[option.value];
+                option.textContent = `${account.name} (...${account.suffix}) - ${formatCurrency(account.balance)}`;
+            });
+        }
+
+        function showAccountDetails(accountKey) {
+            const account = accounts[accountKey];
+            document.getElementById('detail-title').textContent = account.name;
+            document.getElementById('detail-subtitle').textContent = `Account ending ${account.suffix}`;
+            document.getElementById('detail-balance').textContent = formatCurrency(account.balance);
+            document.getElementById('detail-number').textContent = account.number;
+            document.getElementById('detail-ifsc').textContent = account.ifsc;
+            document.getElementById('account-details').classList.remove('hidden');
+            document.getElementById('account-details').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function setMessage(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `text-sm ${isError ? 'text-red-600 font-medium' : 'text-gray-500'}`;
+        }
+
+        function readAmount(id) {
+            const value = Number(document.getElementById(id).value);
+            return Number.isFinite(value) ? value : 0;
+        }
+
+        function addTransaction({ title, category, amount, positive = false, icon = 'fa-receipt' }) {
+            const list = document.getElementById('transaction-list');
+            const item = document.createElement('li');
+            item.className = 'px-4 py-4 sm:px-6 hover:bg-gray-50 transition-colors';
+            item.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full ${positive ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center">
+                            <i class="fa-solid ${icon} ${positive ? 'text-green-500' : 'text-red-500'}"></i>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">${title}</div>
+                            <div class="text-sm text-gray-500">${category}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold ${positive ? 'text-green-600' : 'text-gray-900'}">${positive ? '+' : '-'}${formatCurrency(amount)}</div>
+                        <div class="text-sm text-gray-500">Just now</div>
+                    </div>
+                </div>
+            `;
+            list.prepend(item);
+            applyHistoryLimit();
+        }
+
+        function applyHistoryLimit() {
+            const rows = [...document.querySelectorAll('#transaction-list > li')];
+            rows.forEach((row, index) => {
+                row.classList.toggle('hidden', !historyExpanded && index >= 4);
+            });
+            document.getElementById('toggle-history').textContent = historyExpanded ? 'Show Recent' : 'View All';
+        }
+
+        document.querySelectorAll('.nav-link, .quick-payment-link').forEach(link => {
+            link.addEventListener('click', event => {
+                event.preventDefault();
+                const targetId = event.currentTarget.dataset.view;
+                document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        document.querySelectorAll('.account-detail-link').forEach(link => {
+            link.addEventListener('click', event => {
+                event.preventDefault();
+                showAccountDetails(event.currentTarget.dataset.account);
+            });
+        });
+
+        document.getElementById('toggle-history').addEventListener('click', () => {
+            historyExpanded = !historyExpanded;
+            applyHistoryLimit();
+        });
+
+        document.getElementById('transfer-form').addEventListener('submit', event => {
+            event.preventDefault();
+            const accountKey = document.getElementById('transfer-from').value;
+            const recipient = document.getElementById('transfer-recipient').value.trim();
+            const recipientAccount = document.getElementById('transfer-account').value.trim();
+            const amount = readAmount('transfer-amount');
+            const account = accounts[accountKey];
+
+            if (!recipient || !recipientAccount) {
+                setMessage('transfer-message', 'Enter recipient name and account number.', true);
+                showToast('Transfer needs recipient details.', 'error');
+                return;
+            }
+            if (!/^[0-9]{8,18}$/.test(recipientAccount)) {
+                setMessage('transfer-message', 'Enter a valid account number with 8 to 18 digits.', true);
+                showToast('Account number is invalid.', 'error');
+                return;
+            }
+            if (amount <= 0) {
+                setMessage('transfer-message', 'Enter an amount greater than zero.', true);
+                showToast('Transfer amount is invalid.', 'error');
+                return;
+            }
+            if (amount > account.balance) {
+                setMessage('transfer-message', `Insufficient balance in ${account.name}.`, true);
+                showToast('Insufficient balance.', 'error');
+                return;
+            }
+
+            account.balance -= amount;
+            updateBalances();
+            addTransaction({
+                title: `Transfer to ${recipient}`,
+                category: `IMPS from ${account.name}`,
+                amount,
+                icon: 'fa-arrow-right-arrow-left'
+            });
+            showAccountDetails(accountKey);
+            event.currentTarget.reset();
+            document.getElementById('transfer-from').value = accountKey;
+            setMessage('transfer-message', `Transfer of ${formatCurrency(amount)} sent to ${recipient}.`);
+            showToast('Transfer completed successfully.', 'success');
+        });
+
+        document.getElementById('payment-form').addEventListener('submit', event => {
+            event.preventDefault();
+            const accountKey = document.getElementById('payment-from').value;
+            const paymentType = document.getElementById('payment-type').value;
+            const biller = document.getElementById('payment-biller').value.trim();
+            const amount = readAmount('payment-amount');
+            const account = accounts[accountKey];
+
+            if (!biller) {
+                setMessage('payment-message', 'Enter biller or card name.', true);
+                showToast('Payment needs a biller name.', 'error');
+                return;
+            }
+            if (amount <= 0) {
+                setMessage('payment-message', 'Enter an amount greater than zero.', true);
+                showToast('Payment amount is invalid.', 'error');
+                return;
+            }
+            if (amount > account.balance) {
+                setMessage('payment-message', `Insufficient balance in ${account.name}.`, true);
+                showToast('Insufficient balance.', 'error');
+                return;
+            }
+
+            account.balance -= amount;
+            if (paymentType === 'Credit Card Payment') {
+                creditDue = Math.max(0, creditDue - amount);
+            }
+            updateBalances();
+            addTransaction({
+                title: biller,
+                category: `${paymentType} from ${account.name}`,
+                amount,
+                icon: paymentType === 'Credit Card Payment' ? 'fa-credit-card' : 'fa-bolt'
+            });
+            event.currentTarget.reset();
+            document.getElementById('payment-from').value = accountKey;
+            document.getElementById('payment-type').value = paymentType;
+            setMessage('payment-message', `${paymentType} of ${formatCurrency(amount)} completed.`);
+            showToast('Payment completed successfully.', 'success');
+        });
+
+        updateBalances();
+        applyHistoryLimit();
     </script>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3"></div>
 </body>
 </html>

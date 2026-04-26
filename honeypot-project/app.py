@@ -408,4 +408,4 @@ def clear_local():
     return f"Cleared {deleted} localhost/internal entries. <a href='/dashboard'>Go back to Dashboard</a>"
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)

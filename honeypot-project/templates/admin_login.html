@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Authentication</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body class="login-page">
-  <div class="login-container" style="border-color: var(--danger); box-shadow: var(--shadow-glow-red);">
+  <div class="login-container admin-auth-card">
     <div class="login-header">
       <div class="logo-icon shield">🛡️</div>
       <h2>System Administration</h2>
@@ -18,10 +18,26 @@
     <form action="/admin_login" method="POST" class="login-form">
       <div class="form-group">
         <label for="password">Admin Password</label>
-        <input type="password" id="password" name="password" placeholder="Enter admin password (admin123)" required>
+        <div class="password-input-wrap">
+          <input type="password" id="password" name="password" placeholder="Enter admin password (admin123)" required>
+          <button type="button" class="password-toggle-dark" data-password-toggle="password" aria-label="Show password" title="Show password">Show</button>
+        </div>
       </div>
-      <button type="submit" class="btn-primary" style="background-color: var(--danger);">Access Dashboard</button>
+      <button type="submit" class="btn-primary btn-danger">Access Dashboard</button>
     </form>
   </div>
+  <script>
+    document.querySelectorAll('[data-password-toggle]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        const input = document.getElementById(button.dataset.passwordToggle);
+        const isHidden = input.type === 'password';
+
+        input.type = isHidden ? 'text' : 'password';
+        button.textContent = isHidden ? 'Hide' : 'Show';
+        button.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+        button.setAttribute('title', isHidden ? 'Hide password' : 'Show password');
+      });
+    });
+  </script>
 </body>
 </html>
