@@ -444,6 +444,28 @@ a:hover { color: var(--primary-hover); }
   white-space: nowrap;
 }
 
+.inline-action-form {
+  display: inline-flex;
+}
+
+.btn-remove-user {
+  padding: 0.4rem 0.85rem;
+  background: rgba(251, 113, 133, 0.12);
+  border: 1px solid rgba(251, 113, 133, 0.28);
+  border-radius: 8px;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.btn-remove-user:hover {
+  background: rgba(251, 113, 133, 0.2);
+  border-color: var(--danger);
+  transform: translateY(-1px);
+}
+
 /* Table */
 .table-container { overflow-x: auto; }
 .logs-table {

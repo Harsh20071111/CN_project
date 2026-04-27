@@ -359,6 +359,34 @@ def add_user():
     flash(f"Valid user '{username}' added successfully.", 'success')
     return redirect('/dashboard')
 
+@app.route('/delete_user', methods=['POST'])
+def delete_user():
+    # Only authenticated admins can remove valid banking users.
+    if not session.get('admin'):
+        return redirect('/admin_login')
+
+    user_id = request.form.get('user_id', '').strip()
+    if not user_id:
+        flash('User ID is required.', 'error')
+        return redirect('/dashboard')
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT username FROM users WHERE id = ?", (user_id,))
+    user_record = c.fetchone()
+
+    if not user_record:
+        conn.close()
+        flash('User not found.', 'error')
+        return redirect('/dashboard')
+
+    c.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+    flash(f"Valid user '{user_record[0]}' removed successfully.", 'success')
+    return redirect('/dashboard')
+
 @app.route('/export')
 def export():
     # Export Logs (CSV)
