@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, send_file
+from flask import Flask, render_template, request, redirect, session, send_file, flash
 from werkzeug.middleware.proxy_fix import ProxyFix
 import sqlite3
 import datetime
@@ -328,6 +328,36 @@ def dashboard():
     conn.close()
 
     return render_template('dashboard.html', logs=logs_data, users=users_data)
+
+@app.route('/add_user', methods=['POST'])
+def add_user():
+    # Only authenticated admins can create valid banking users.
+    if not session.get('admin'):
+        return redirect('/admin_login')
+
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '').strip()
+
+    if not username or not password:
+        flash('Username and password are required.', 'error')
+        return redirect('/dashboard')
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT id FROM users WHERE username = ?", (username,))
+    existing_user = c.fetchone()
+
+    if existing_user:
+        conn.close()
+        flash(f"User '{username}' already exists.", 'error')
+        return redirect('/dashboard')
+
+    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+    conn.commit()
+    conn.close()
+
+    flash(f"Valid user '{username}' added successfully.", 'success')
+    return redirect('/dashboard')
 
 @app.route('/export')
 def export():
